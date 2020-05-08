@@ -18,7 +18,8 @@ include $(TOP)/configure/CONFIG
 DB += sDctEL1252.proto
 DB += UTCtime.proto
 DB += ethercatmc.template
-DB += ethercatmcDctEL1252.template
+DB += ethercatmcDctEL1252-PILS.template
+DB += ethercatmcDctEL1252-Stream.template
 DB += ethercatmcdebug.template
 DB += ethercatmchome.template
 DB += ethercatmcindexer.template

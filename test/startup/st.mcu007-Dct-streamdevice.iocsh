@@ -10,4 +10,4 @@ epicsEnvSet("STREAM_PROTOCOL_PATH", "db")
 
 epicsEnvSet("PREC",          "$(SM_PREC=3)")
 
-< ethercatmcDctEL1252.iocsh
+< ethercatmcDctEL1252-Stream.iocsh

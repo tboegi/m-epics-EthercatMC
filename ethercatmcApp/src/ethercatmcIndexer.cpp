@@ -1185,11 +1185,13 @@ asynStatus ethercatmcController::pollIndexer(void)
       nSec = nSec << 32;
       nSec = nSec + tempL;
       DCtimeToEpicsTimeStamp(nSec, &timeStamp);
-      asynPrint(pasynUserController_, ASYN_TRACE_FLOW | ASYN_TRACE_INFO,
+      asynPrint(pasynUserController_, ASYN_TRACE_FLOW, // | ASYN_TRACE_INFO,
                 "%spollIndexer DCtEL125 nSec=%" PRIu64 " sec:nSec=%09u.%09u\n",
                 modNamEMC, nSec,
                 timeStamp.secPastEpoch, timeStamp.nsec);
-      //setTimeStamp(&timeStamp);
+      setIntegerParam(ethercatmcDCtEL1252Sec_,  timeStamp.secPastEpoch);
+      setIntegerParam(ethercatmcDCtEL1252NSec_, timeStamp.nsec);
+      
       callBacksNeeded = 1;
     }
 

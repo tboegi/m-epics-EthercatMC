@@ -71,6 +71,8 @@ FILENAME...   ethercatmcController.h
 #define ethercatmcDbgStrToLogString          "StrToLOG"
 #define ethercatmcDCtimeSecString            "DCtimeSec"
 #define ethercatmcDCtimeNSecString           "DCtimeNSec"
+#define ethercatmcDCtEL1252SecString         "DCtEL1252Sec"
+#define ethercatmcDCtEL1252NSecString        "DCtEL1252NSec"
 
 #define HOMPROC_MANUAL_SETPOS    15
 
@@ -304,6 +306,8 @@ public:
   int ethercatmcAcc_RB_;
   int ethercatmcDCtimeSec_;
   int ethercatmcDCtimeNSec_;
+  int ethercatmcDCtEL1252Sec_;
+  int ethercatmcDCtEL1252NSec_;
   int ethercatmcCfgVELO_;
   int ethercatmcCfgVMAX_;
   int ethercatmcCfgJVEL_;
