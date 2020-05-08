@@ -247,6 +247,8 @@ public:
     unsigned int DCtimeNSecDeviceOffset;
     unsigned int DCclockLdeviceOffset;
     unsigned int DCclockHdeviceOffset;
+    unsigned int DCtEL1252LdeviceOffset;
+    unsigned int DCtEL1252HdeviceOffset;
     AmsNetidAndPortType remote;
     AmsNetidAndPortType local;
     unsigned adsport;
