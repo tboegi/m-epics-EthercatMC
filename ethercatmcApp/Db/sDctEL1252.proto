@@ -1,0 +1,18 @@
+# Protocol file to get the latched edge of the 1HZ pulse from the timing
+# system feed into input 1 of the EL1252-0050 terminal
+#
+##################################################
+# General Settings
+##################################################
+
+Terminator = LF;
+ReplyTimeout = 1000;
+
+
+###################################################
+# Get functions
+###################################################
+getUTCtime {
+   out "ADSPORT=853/Main.sDctEL1252?;";
+   in "%23c;";
+}
