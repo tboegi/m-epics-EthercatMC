@@ -63,6 +63,8 @@ extern "C" const char *errStringFromErrId(int nErrorId)
     return "Consequ Err";
   case 0x42EF:
     return "Locked Stop";
+  case 0x4359:
+    return "Velo unaccep";
   case 0x4460:
     return "Low soft lim";
   case 0x4461:
@@ -72,7 +74,7 @@ extern "C" const char *errStringFromErrId(int nErrorId)
   case 0x4463:
     return "Max position";
   case 0x4464:
-    return "HW fault";
+    return "Enc HW error";
   case 0x4550:
     return "Follow err pos";
   case 0x4551:
@@ -134,6 +136,7 @@ ethercatmcController::ethercatmcController(const char *portName,
   ctrlLocal.oldStatus = asynDisconnected;
   ctrlLocal.cntADSstatus = 0;
   features_ = 0;
+  lockADSsocket_ = epicsMutexMustCreate();
 #ifndef motorMessageTextString
   createParam("MOTOR_MESSAGE_TEXT",          asynParamOctet,       &ethercatmcMCUErrMsg_);
 #else
@@ -151,6 +154,7 @@ ethercatmcController::ethercatmcController(const char *portName,
   createParam(ethercatmcHomPosString,        asynParamFloat64,     &ethercatmcHomPos_);
   createParam(ethercatmcStatusCodeString,    asynParamInt32,       &ethercatmcStatusCode_);
   createParam(ethercatmcStatusBitsString,    asynParamInt32,       &ethercatmcStatusBits_);
+  createParam(ethercatmcFoffVisString,       asynParamInt32,       &ethercatmcFoffVis_);
   createParam(ethercatmcHomProc_RBString,    asynParamInt32,       &ethercatmcHomProc_RB_);
   createParam(ethercatmcHomPos_RBString,     asynParamFloat64,     &ethercatmcHomPos_RB_);
   createParam(ethercatmcVelToHomString,      asynParamFloat64,     &ethercatmcVelToHom_);
@@ -841,6 +845,28 @@ asynStatus ethercatmcController::getFeatures(int *pRet)
   return asynError;
 }
 
+/** Called when asyn clients call pasynOctetSyncIO->write().
+  * Extracts the function and axis number from pasynUser.
+  * Sets the value in the parameter library.
+  * \param[in] pasynUser asynUser structure that encodes the reason and address.
+  * \param[in] value Value to write.
+  * \param[in] nChars len (but we only support strings ?!).
+  * \param[out] nActual. number of octets that had been written */
+asynStatus ethercatmcController::writeOctet(asynUser *pasynUser,
+                                            const char *value,
+                                            size_t nChars, size_t *nActual)
+{
+  asynStatus status = asynSuccess;
+  asynMotorAxis *pAxis;
+  int function = pasynUser->reason;
+
+  pAxis = getAxis(pasynUser);
+  if (!pAxis) return asynError;
+
+  status = pAxis->setStringParam(function, value);
+  if (status == asynSuccess) *nActual = strlen(value);
+  return status;
+}
 
 /** Reports on status of the driver
   * \param[in] fp The file pointer on which report information will be written

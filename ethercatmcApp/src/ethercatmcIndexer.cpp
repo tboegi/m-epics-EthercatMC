@@ -500,7 +500,7 @@ asynStatus ethercatmcController::indexerParamWrite(int axisNo,
       return status;
     }
     asynPrint(pasynUserController_, traceMask,
-              "%sindexerParamWrite(%d) paramIndex=%s (%u) value=%2g "
+              "%sindexerParamWrite(%d) paramIndex=%s (%u) value=%02g "
               "lenInPlcPara=%u counter=%u"
               " status=%s (%d) cmdSubParamIndex=%s\n",
               modNamEMC, axisNo,
@@ -576,7 +576,7 @@ ethercatmcController::getPlcMemoryFromProcessImage(unsigned indexOffset,
     return asynSuccess;
   }
   /* no process image, get values */
-  return getPlcMemoryViaADS(indexOffset, data,  lenInPlc);
+  return asynDisabled;
 }
 
 void ethercatmcController::parameterFloatReadBack(unsigned axisNo,
@@ -598,7 +598,10 @@ void ethercatmcController::parameterFloatReadBack(unsigned axisNo,
   case PARAM_IDX_USR_MIN_FLOAT:
     {
       int enabled = fValue > fABSMIN ? 1 : 0;
-      updateCfgValue(axisNo,ethercatmcCfgDLLM_En_RB_, enabled, "dllm_en");
+      updateCfgValue(axisNo,ethercatmcCfgDLLM_En_RB_, enabled, "dllm_en_rb");
+      if (initial) {
+        updateCfgValue(axisNo,ethercatmcCfgDLLM_En_, enabled, "dllm_en");
+      }
       if (enabled) {
         updateCfgValue(axisNo, ethercatmcCfgDLLM_RB_,   fValue, "dllm");
       }
@@ -614,7 +617,10 @@ void ethercatmcController::parameterFloatReadBack(unsigned axisNo,
   case PARAM_IDX_USR_MAX_FLOAT:
     {
       int enabled = fValue < fABSMAX ? 1 : 0;
-      updateCfgValue(axisNo, ethercatmcCfgDHLM_En_RB_, enabled, "dhlm_en");
+      updateCfgValue(axisNo, ethercatmcCfgDHLM_En_RB_, enabled, "dhlm_en_rb");
+      if (initial) {
+        updateCfgValue(axisNo,ethercatmcCfgDHLM_En_, enabled, "dhlm_en");
+      }
       if (enabled) {
         updateCfgValue(axisNo, ethercatmcCfgDHLM_RB_, fValue, "dhlm");
       }
@@ -673,7 +679,7 @@ void ethercatmcController::parameterFloatReadBack(unsigned axisNo,
 #ifdef  motorNotHomedProblemString
     pAxis->setIntegerParam(motorNotHomedProblem_, MOTORNOTHOMEDPROBLEM_ERROR);
 #endif
-    pAxis->setIntegerParam(ethercatmcHomProc_RB_, 15);
+    pAxis->setIntegerParam(ethercatmcFoffVis_, 1);
     break;
   case PARAM_IDX_FUN_MOVE_VELOCITY:
     if (initial) updateCfgValue(axisNo, ethercatmcCfgJVEL_, fabs(fValue), "jvel");
@@ -853,6 +859,8 @@ ethercatmcController::newIndexerAxis(ethercatmcIndexerAxis *pAxis,
 asynStatus ethercatmcController::initialPollIndexer(void)
 {
   asynStatus status;
+  unsigned firstDeviceStartOffset = (unsigned)-1; /* Will be decreased while we go */
+  unsigned lastDeviceEndOffset = 0;  /* will be increased while we go */
   unsigned iTmpVer = 0xC0DEAFFE;
   double version = 0.0;
   struct {
@@ -869,6 +877,12 @@ asynStatus ethercatmcController::initialPollIndexer(void)
   unsigned infoType7 = 7;
   int      axisNo = 0;
 
+  /* In case of re-connect free the old one */
+  free(ctrlLocal.pIndexerProcessImage);
+  ctrlLocal.pIndexerProcessImage = NULL;
+  ctrlLocal.indexerOffset = 4;
+  ctrlLocal.firstDeviceStartOffset = 0;
+  ctrlLocal.lastDeviceEndOffset = 0;
   memset(&descVersAuthors, 0, sizeof(descVersAuthors));
   if (!ctrlLocal.adsport) {
     ctrlLocal.adsport = 851;
@@ -919,10 +933,6 @@ asynStatus ethercatmcController::initialPollIndexer(void)
 
   if (!version) status = asynDisabled;
   if (status) goto endPollIndexer;
-
-  ctrlLocal.indexerOffset = 4;
-  ctrlLocal.firstDeviceStartOffset = (unsigned)-1;
-  ctrlLocal.lastDeviceEndOffset = 0;
 
   status = getPlcMemoryUint(ctrlLocal.indexerOffset,
                             &ctrlLocal.indexerOffset, 2);
@@ -1014,28 +1024,28 @@ asynStatus ethercatmcController::initialPollIndexer(void)
       asynPrint(pasynUserController_, ASYN_TRACE_INFO,
                 "%sfirstDeviceStartOffset=%u lastDeviceEndOffset=%u\n",
                 modNamEMC,
-                ctrlLocal.firstDeviceStartOffset,
-                ctrlLocal.lastDeviceEndOffset);
+                firstDeviceStartOffset,
+                lastDeviceEndOffset);
       /* Create memory to keep the processimage for all devices
          We include the non-used bytes at the beginning,
          including the nytes used by the indexer (and waste some bytes)
          to make it easier to understand the adressing using offset */
-
-      /* In case of re-connect free the old one */
-      free(ctrlLocal.pIndexerProcessImage);
       /* create a new one, with the right size */
+
+      ctrlLocal.firstDeviceStartOffset = firstDeviceStartOffset;
+      ctrlLocal.lastDeviceEndOffset = lastDeviceEndOffset;
       ctrlLocal.pIndexerProcessImage = (uint8_t*)calloc(1, ctrlLocal.lastDeviceEndOffset);
-      break; /* End of list ?? */
+      break; /* End of list */
     }
     /* indexer has devNum == 0, it is not a device */
     if (devNum) {
       unsigned endOffset = iOffsBytes + iSizeBytes;
       /* find the lowest and highest offset for all devices */
-      if (iOffsBytes < ctrlLocal.firstDeviceStartOffset) {
-        ctrlLocal.firstDeviceStartOffset = iOffsBytes;
+      if (iOffsBytes < firstDeviceStartOffset) {
+        firstDeviceStartOffset = iOffsBytes;
       }
-      if (endOffset > ctrlLocal.lastDeviceEndOffset) {
-        ctrlLocal.lastDeviceEndOffset = endOffset;
+      if (endOffset > lastDeviceEndOffset) {
+        lastDeviceEndOffset = endOffset;
       }
     }
     switch (iTypCode) {
@@ -1211,6 +1221,34 @@ extern "C" void DCtimeToEpicsTimeStamp(uint64_t dcNsec, epicsTimeStamp *ts)
   ts->nsec =         (uint32_t)(nSecEpicsEpoch % NSEC_PER_SEC);
 }
 
+/*
+ * Find if an asyn parameter is connected to an indexer output
+ */
+pilsAsynDevInfo_type *ethercatmcController::findIndexerOutputDevice(int axisNo,
+                                                                    int function,
+                                                                    asynParamType pilsAsynParamType)
+{
+  static size_t maxNumPilsAsynDevInfo =
+    (sizeof(ctrlLocal.pilsAsynDevInfo) / sizeof(ctrlLocal.pilsAsynDevInfo[0])) - 1;
+  unsigned numPilsAsynDevInfo;
+
+  for (numPilsAsynDevInfo = 0;
+       numPilsAsynDevInfo < maxNumPilsAsynDevInfo;
+       numPilsAsynDevInfo++) {
+    pilsAsynDevInfo_type *pPilsAsynDevInfo
+      = &ctrlLocal.pilsAsynDevInfo[numPilsAsynDevInfo];
+
+    if (!pPilsAsynDevInfo->indexOffset) return NULL;
+
+    if ((axisNo == pPilsAsynDevInfo->axisNo) &&
+        (function == pPilsAsynDevInfo->function) &&
+        (pilsAsynParamType == pPilsAsynDevInfo->pilsAsynParamType) &&
+        (pPilsAsynDevInfo->isOutput))
+      return pPilsAsynDevInfo;
+  }
+  return NULL;
+}
+
 asynStatus ethercatmcController::pollIndexer(void)
 {
   int callBacksNeeded = 0;
@@ -1248,6 +1286,9 @@ asynStatus ethercatmcController::pollIndexer(void)
 
         unsigned indexOffset = pPilsAsynDevInfo->indexOffset;
         unsigned lenInPLC = pPilsAsynDevInfo->lenInPLC;
+        /* Each axis has it's own parameters.
+           axisNo == 0 is no special axis, parameters
+           for "the controller", additional IO, PTP info */
         int axisNo = pPilsAsynDevInfo->axisNo;
         int function = pPilsAsynDevInfo->function;
         void *pDataInPlc = &ctrlLocal.pIndexerProcessImage[indexOffset];
@@ -1320,6 +1361,7 @@ asynStatus ethercatmcController::pollIndexer(void)
         }
       } /* for */
       if (ctrlLocal.ethercatmcDCclockH_ && ctrlLocal.ethercatmcDCclockL_) {
+        /* DC time, 64 bits, splitted into low- and high part */
         epicsTimeStamp timeStamp;
         epicsInt32 tempL;
         epicsInt32 tempH;
@@ -1341,6 +1383,7 @@ asynStatus ethercatmcController::pollIndexer(void)
           callBacksNeeded = 1;
         }
       } else if (ctrlLocal.ethercatmcDCtimeSec_ && ctrlLocal.ethercatmcDCtimeNSec_) {
+        /* "DCtimeSec", "DCtimeNSec" */
         epicsTimeStamp timeStamp;
         epicsInt32 sec = 0;
         epicsInt32 nSec = 0;

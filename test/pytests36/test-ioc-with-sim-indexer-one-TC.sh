@@ -11,7 +11,7 @@ fi
 # Need to make sure that we have caget in the PATH
 if ! type caget >/dev/null 2>&1; then
   if test -z "$EPICS_HOST_ARCH"; then
-    RELEASELOCAL=../configure/RELEASE.local
+    RELEASELOCAL=../../configure/RELEASE.local
     if test -r "$RELEASELOCAL"; then
       # Code stolen from .ci/travis/prepare.sh
       eval $(grep "EPICS_BASE=" $RELEASELOCAL)
@@ -37,19 +37,19 @@ if ! type caget; then
   exit 1
 fi
 
-
-
 # hard-coded values
 # Disadvantage: We can only run one instance on the same machine
 # Advantage:    We can kill old instances, because the port number is known
-PVNAME=ca://IOC:m1
+
 SIM_NC_PORT=5000
 IOC_NC_PORT=5001
+
 
 killExitIocSimulator()
 {
   # exit IOC
   echo "exit" | nc localhost ${IOC_NC_PORT} || :
+  sleep 2
   # terminate simulator
   echo "kill" | nc localhost ${SIM_NC_PORT} || :
 }
@@ -63,21 +63,25 @@ echo =====
 echo set
 set
 echo =====
-SIM_NC_PORT=5000
-IOC_NC_PORT=5001
 
 # start simulator
-./run-ethercatmc-simulator.sh &
+(cd .. && ./run-ethercatmc-simulator.sh ) &
+SIMULATOR_PID=$!
 sleep 5
 
 # start ioc
-nc -l  ${IOC_NC_PORT} | /bin/sh -e -x ./run-ethercatmc-ioc.sh simulator &
+date
+( cd .. && nc -l  ${IOC_NC_PORT} | /bin/sh -e -x ./run-ethercatmc-ioc.sh sim-indexer 127.0.0.1:48898 127.0.0.1.1.1 128.0.0.1.1.1 ) &
+IOC_PID=$!
 sleep 10
+date
 
-# run test cases
-/bin/sh -e -x ./run-ethercatmc-tests.sh $PVNAME
-status=$?
+./runTests.sh "$@"
+exitCode=$?
 
-killExitIocSimulator
+kill -9 $IOC_PID || :
+kill -9 $SIMULATOR_PID || :
+killExitIocSimulator || :
 
-exit $status
+echo exitCode=$exitCode
+exit $exitCode

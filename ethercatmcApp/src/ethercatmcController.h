@@ -42,6 +42,7 @@ FILENAME...   ethercatmcController.h
 #define ethercatmcNamAux7_String             "NamAuxBit7"
 #define ethercatmcNamBit24_String            "NamBit24"
 #define ethercatmcNamBit25_String            "NamBit25"
+#define ethercatmcFoffVisString              "FoffVis"
 #define ethercatmcHomProc_RBString           "HomProc-RB"
 #define ethercatmcHomPos_RBString            "HomPos-RB"
 #define ethercatmcHomProcString              "HomProc"
@@ -173,6 +174,9 @@ public:
                        double idlePollPeriod,
                        const char *optionStr);
 
+  /* Note: the motor/master version does not have it, so we need it here */
+  asynStatus writeOctet(asynUser *pasynUser, const char *value,
+                        size_t nChars, size_t *nActual);
   void report(FILE *fp, int level);
   asynStatus setMCUErrMsg(const char *value);
   asynStatus configController(int needOk, const char *value);
@@ -182,6 +186,7 @@ public:
   int features_;
 
   protected:
+  epicsMutexId      lockADSsocket_;
   void udateMotorLimitsRO(int axisNo);
   void udateMotorLimitsRO(int axisNo, int enabledHighAndLow,
                           double fValueHigh, double fValueLow);
@@ -263,6 +268,11 @@ public:
                           unsigned indexOffset,
                           unsigned iTypCode,
                           const char *paramName);
+
+  pilsAsynDevInfo_type *findIndexerOutputDevice(int axisNo,
+                                                int function,
+                                                asynParamType pilsAsynParamType);
+
   struct {
     uint8_t      *pIndexerProcessImage;
     asynStatus   oldStatus;
@@ -310,6 +320,7 @@ public:
   int ethercatmcNamAux7_;
   int ethercatmcNamBit24_;
   int ethercatmcNamBit25_;
+  int ethercatmcFoffVis_;
   int ethercatmcHomProc_RB_;
   int ethercatmcHomPos_RB_;
   int ethercatmcHomProc_;

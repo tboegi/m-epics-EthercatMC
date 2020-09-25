@@ -129,6 +129,17 @@ def InitLimitsWithROlimits(self, tc_no):
     ## XXX self.axisCom.put("-DbgStrToLOG", "initLim " + str(tc_no)[0:20])
     maxTime = 5  # 5 seconds maximum to let read only parameters ripple through
     maxDelta = 0.05  # 5 % error tolerance margin
+    self.axisCom.put("-CfgDLLM-En", 0, wait=True)
+    self.axisCom.put("-CfgDHLM-En", 0, wait=True)
+    self.axisMr.setValueOnSimulator(tc_no, "fHighSoftLimitPos", myCfgDHLM)
+    self.axisMr.setValueOnSimulator(tc_no, "fLowSoftLimitPos", myCfgDLLM)
+    self.axisCom.put("-CfgDHLM", myCfgDHLM)
+    self.axisCom.put("-CfgDLLM", myCfgDLLM)
+    self.axisCom.put("-CfgDLLM-En", 1, wait=True)
+    self.axisCom.put("-CfgDHLM-En", 1, wait=True)
+
+    # Wait until ".DHLM" and ".DLLM" have rippled through the poller
+    # and the processing in the motorRecord
     while maxTime > 0:
         actDHLM = self.axisCom.get(".DHLM", myDHLM)
         actDLLM = self.axisCom.get(".DLLM", myDLLM)
@@ -141,12 +152,6 @@ def InitLimitsWithROlimits(self, tc_no):
         print(f"{tc_no}:{int(lineno())} resH={resH} resL={resL}")
         if (resH == True) and (resL == True):
             return
-        self.axisCom.put("-CfgDLLM-En", 0, wait=True)
-        self.axisCom.put("-CfgDHLM-En", 0, wait=True)
-        self.axisMr.setValueOnSimulator(tc_no, "fHighSoftLimitPos", myCfgDHLM)
-        self.axisMr.setValueOnSimulator(tc_no, "fLowSoftLimitPos", myCfgDLLM)
-        self.axisCom.put("-CfgDLLM-En", 1, wait=True)
-        self.axisCom.put("-CfgDHLM-En", 1, wait=True)
         time.sleep(polltime)
         maxTime = maxTime - polltime
 
@@ -181,7 +186,16 @@ def readBackParamVerify(self, tc_no, field_name, expVal):
 
 
 def setLimit(
-    self, tc_no, field, value, expDHLM, expDLLM, expHLM, expLLM, expM3rhlm, expM3rllm,
+    self,
+    tc_no,
+    field,
+    value,
+    expDHLM,
+    expDLLM,
+    expHLM,
+    expLLM,
+    expM3rhlm,
+    expM3rllm,
 ):
     self.axisCom.put("-DbgStrToLOG", "Start " + str(tc_no))
     oldDHLM = self.axisCom.get(".DHLM", use_monitor=False)

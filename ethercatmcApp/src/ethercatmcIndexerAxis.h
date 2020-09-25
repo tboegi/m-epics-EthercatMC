@@ -47,7 +47,6 @@ public:
   void setIndexerDevNumOffsetTypeCode(unsigned devNum, unsigned iOffset, unsigned iTypCode);
   void setAuxBitsNotHomedMask(unsigned auxBitsNotHomedMask);
   void setAuxBitsEnabledMask(unsigned auxBitsEnabledMask);
-  void setErrorIdOffset(unsigned iOffset);
   void addPollNowParam(uint8_t paramIndex);
   asynStatus setIntegerParamLog(int function, int newValue, const char *name);
   asynStatus poll(bool *moving);
@@ -67,6 +66,7 @@ private:
       int          old_hasError;
       unsigned int oldStatusDisconnected : 1;
       unsigned int initialPollNeeded :1;
+      unsigned idxStatusCode;
     }  dirty;
     double old_paramValue;
     unsigned pollNowIdx;
@@ -77,11 +77,8 @@ private:
     unsigned paramIfOffset;
     unsigned auxBitsNotHomedMask;
     unsigned auxBitsEnabledMask;
-    unsigned errorIdOffset;
-    unsigned old_statusReasonAux;
-    unsigned old_idxAuxBits;
     unsigned old_paramCtrl;
-    unsigned old_idxStatusCode;
+    unsigned old_idxAuxBits;
     unsigned int hasProblem :1;
     char adsport_str[15]; /* "ADSPORT=12345/" */ /* 14 should be enough, */
     uint8_t pollNowParams[128]; /* 0 terminated list of parameters to be polled */

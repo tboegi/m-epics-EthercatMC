@@ -167,12 +167,22 @@ static int motorHandleADS_ADR_getInt(unsigned adsport,
         *iValue = motor_axis_no & 1 ? 0 : 1;
         return 0;
     }
-  } else if (indexGroup == 0x3040010 && indexOffset == 0x80000049) {
-    *iValue = (int)getEncoderPos(1);
-    return 0;
-  } else if (indexGroup == 0x3040010 && indexOffset == 0x8000004F) {
-    *iValue = (int)getEncoderPos(2);
-    return 0;
+  } else if (indexGroup == 0x3040010) {
+    /* This is for the simulator only.
+       We need it in the test scripts */
+    if ( indexOffset == 0x80000049) {
+      *iValue = (int)getEncoderPos(1);
+      return 0;
+    } else if (indexOffset == 0x8000004F) {
+      *iValue = (int)getEncoderPos(2);
+      return 0;
+    } else if (indexOffset == 0x80000055) {
+      *iValue = (int)getEncoderPos(3);
+      return 0;
+    } else if (indexOffset == 0x8000005b) {
+      *iValue = (int)getEncoderPos(4);
+      return 0;
+    }
   }
   CMD_BUF_PRINTF_RETURN_ERROR_OR_DIE(__LINE__, "%s/%s:%d indexGroup=0x%x indexOffset=0x%x",
                       __FILE__, __FUNCTION__, __LINE__,
@@ -747,7 +757,8 @@ static int motorHandleOneSetArg(const char *myarg_1, int motor_axis_no)
       double velocity = getNxtMoveVelocity(motor_axis_no);
       double acceleration = getNxtMoveAcceleration(motor_axis_no);
 
-      if (acceleration > cmd_Motor_cmd[motor_axis_no].maximumVelocity) {
+      // TODO: Check for max acceleration
+      if (velocity > cmd_Motor_cmd[motor_axis_no].maximumVelocity) {
         fprintf(stdlog, "%s/%s:%d axis_no=%d velocity=%g maximumVelocity=%g\n",
                 __FILE__, __FUNCTION__, __LINE__,
                 motor_axis_no,
