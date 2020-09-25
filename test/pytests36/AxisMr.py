@@ -747,17 +747,15 @@ class AxisMr:
         self.axisCom.put(".CNEN", cnen)
         while wait_for_power_changed > 0:
             msta = int(self.axisCom.get(".MSTA", use_monitor=False))
-            print(
-                "%s: wait_for_power_changed=%f msta=%x %s"
-                % (tc_no, wait_for_power_changed, msta, self.getMSTAtext(msta))
-            )
+            debug_text = f"{tc_no}: wait_for_power_changed={wait_for_power_changed} msta={msta:4x} {self.getMSTAtext(msta)}"
+            print(debug_text)
             if cnen and (msta & self.MSTA_BIT_AMPON):
-                return True
+                return
             if not cnen and not (msta & self.MSTA_BIT_AMPON):
-                return True
+                return
             time.sleep(polltime)
             wait_for_power_changed -= polltime
-        return False
+        raise Exception(debug_text)
 
     def resetAxis(self, tc_no):
         wait_for_ErrRst = 5
@@ -775,7 +773,8 @@ class AxisMr:
             wait_for_ErrRst -= polltime
         return False
 
-    def homeAxis(self, tc_no):
+    def powerOnHomeAxis(self, tc_no):
+        self.setCNENandWait(tc_no, 1)
         # Get values to be able calculate a timeout
         range_postion = self.axisCom.get(".HLM") - self.axisCom.get(".LLM")
         hvel = self.axisCom.get(".HVEL")
