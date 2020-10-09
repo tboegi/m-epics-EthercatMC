@@ -301,8 +301,8 @@ public:
     unsigned numPilsAsynDevInfo;
     int ethercatmcDCtimeSec_;
     int ethercatmcDCtimeNSec_;
-    int ethercatmcDCclockH_;
-    int ethercatmcDCclockL_;
+    int ethercatmcDClockH_;
+    int ethercatmcDClockL_;
   } ctrlLocal;
 
 

@@ -1198,10 +1198,10 @@ void ethercatmcController::addPilsAsynDevInfo(int      axisNo,
           ctrlLocal.ethercatmcDCtimeSec_ = function;;
         } else if (!strcmp(paramName, "DCtimeNSec")) {
           ctrlLocal.ethercatmcDCtimeNSec_ = function;;
-        } else if (!strcmp(paramName, "DCclockL")) {
-          ctrlLocal.ethercatmcDCclockL_ = function;;
-        } else if (!strcmp(paramName, "DCclockH")) {
-          ctrlLocal.ethercatmcDCclockH_ = function;;
+        } else if (!strcmp(paramName, "DClockL")) {
+          ctrlLocal.ethercatmcDClockL_ = function;;
+        } else if (!strcmp(paramName, "DClockH")) {
+          ctrlLocal.ethercatmcDClockH_ = function;;
         }
       }
     }
@@ -1366,15 +1366,15 @@ asynStatus ethercatmcController::pollIndexer(void)
           ;
         }
       } /* for */
-      if (ctrlLocal.ethercatmcDCclockH_ && ctrlLocal.ethercatmcDCclockL_) {
+      if (ctrlLocal.ethercatmcDClockH_ && ctrlLocal.ethercatmcDClockL_) {
         /* DC time, 64 bits, splitted into low- and high part */
         epicsTimeStamp timeStamp;
         epicsInt32 tempL;
         epicsInt32 tempH;
         uint64_t nSec;
-        if ((getIntegerParam(0, ctrlLocal.ethercatmcDCclockH_,
+        if ((getIntegerParam(0, ctrlLocal.ethercatmcDClockH_,
                              &tempH) == asynSuccess) &&
-            (getIntegerParam(0, ctrlLocal.ethercatmcDCclockL_,
+            (getIntegerParam(0, ctrlLocal.ethercatmcDClockL_,
                              &tempL) == asynSuccess)) {
           nSec = (uint32_t)tempH;
           nSec = nSec << 32;
@@ -1382,7 +1382,7 @@ asynStatus ethercatmcController::pollIndexer(void)
 
           DCtimeToEpicsTimeStamp(nSec, &timeStamp);
           asynPrint(pasynUserController_, ASYN_TRACE_FLOW, // | ASYN_TRACE_INFO,
-                    "%spollIndexer DCclock   nSec=%" PRIu64 " sec:nSec=%09u.%09u\n",
+                    "%spollIndexer DClock   nSec=%" PRIu64 " sec:nSec=%09u.%09u\n",
                     modNamEMC, nSec,
                     timeStamp.secPastEpoch, timeStamp.nsec);
           setTimeStamp(&timeStamp);
