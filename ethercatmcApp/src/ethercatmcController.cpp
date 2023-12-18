@@ -264,6 +264,8 @@ ethercatmcController::ethercatmcController(const char *portName,
               &defAsynPara.ethercatmcPTPdiffTimeIOC_MCU_);
   createParam(ethercatmcPTPdiffXYtime_MCUString, asynParamFloat64,
               &defAsynPara.ethercatmcPTPdiffXYtime_MCU_);
+  createParam(ethercatmcPTPdiffAxistime_MCUString, asynParamFloat64,
+              &defAsynPara.ethercatmcPTPdiffAxistime_MCU_);
   createParam(ethercatmcPTPallGoodString, asynParamInt32,
               &defAsynPara.ethercatmcPTPallGood_);
   createParam(ethercatmcRBV_TSEString, asynParamFloat64,

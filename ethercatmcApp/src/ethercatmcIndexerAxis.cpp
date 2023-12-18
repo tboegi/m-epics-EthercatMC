@@ -1368,6 +1368,35 @@ asynStatus ethercatmcIndexerAxis::doThePoll(bool cached, bool *moving) {
   if (motorRecDirection >= 0) {
     drvlocal.dirty.motorRecDirection = motorRecDirection;
   }
+#ifdef ETHERCATMC_ASYN_ASYNPARAMINT64
+  {
+    int systemUTCtimePTPFunction = pC_->ctrlLocal.systemUTCtimePTPFunction;
+    if (systemUTCtimePTPFunction) {
+      /* May need to manipulate/adjust the "time"
+         when the motor position was taken */
+      epicsInt64 oldValue = 0;
+      int systemUTCtimePTPIndexRd = 0;
+      if (!pC_->getInteger64Param(systemUTCtimePTPIndexRd,
+                                  systemUTCtimePTPFunction, &oldValue)) {
+        epicsInt64 diffValue = 0;
+        if (!pC_->getInteger64Param(
+                axisNo_, pC_->defAsynPara.ethercatmcPTPdiffAxistime_MCU_,
+                &diffValue)) {
+          uint64_t nSec = (uint64_t)(oldValue - diffValue);
+          epicsTimeStamp timeAxisUTC_MCU;
+          UTCtimeToEpicsTimeStamp(nSec, &timeAxisUTC_MCU);
+          int tracelevel = ASYN_TRACE_FLOW;
+          asynPrint(pC_->pasynUserController_, tracelevel,
+                    "%s(%d) poll systemUTC=%" PRIi64 " diffValue=%" PRIi64
+                    " sec:nSec=%09u.%09u\n",
+                    modNamEMC, axisNo_, oldValue, diffValue,
+                    timeAxisUTC_MCU.secPastEpoch, timeAxisUTC_MCU.nsec);
+          pC_->setTimeStamp(&timeAxisUTC_MCU);
+        }
+      }
+    }
+  }
+#endif
   callParamCallbacks();
   return status;
 }

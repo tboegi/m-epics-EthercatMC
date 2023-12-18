@@ -90,6 +90,7 @@ FILENAME...   ethercatmcController.h
 #define ethercatmcVel_RBString "Vel-RB"
 #define ethercatmcAcc_RBString "Acc-RB"
 #define ethercatmcPTPdiffTimeIOC_MCUString "PTPdiffTimeIOC_MCU"
+#define ethercatmcPTPdiffAxistime_MCUString "PTPdiffAxisTime_MCU"
 #define ethercatmcPTPdiffXYtime_MCUString "PTPdiffXYtime_MCU"
 #define ethercatmcPTPallGoodString "PTPallGood"
 #define ethercatmcRBV_TSEString "RBV-TSE"
@@ -244,6 +245,7 @@ const char *errStringFromErrId(int nErrorId);
 const char *stringFromAsynParamType(asynParamType);
 double calcSleep(int counter);
 int paramIndexIsReadLaterInBackground(unsigned paramIndex);
+void UTCtimeToEpicsTimeStamp(uint64_t dcNsec, epicsTimeStamp *ts);
 }
 #define NETTOUINT(n) netToUint((const void *)&n, sizeof(n))
 #define NETTODOUBLE(n) netToDouble((const void *)&n, sizeof(n))
@@ -608,6 +610,7 @@ class epicsShareClass ethercatmcController : public asynMotorController {
     int ethercatmcVel_RB_; /* Velocity used in MCU */
     int ethercatmcAcc_RB_; /* Acceleration used in MCU */
     int ethercatmcPTPdiffTimeIOC_MCU_;
+    int ethercatmcPTPdiffAxistime_MCU_;
     int ethercatmcPTPdiffXYtime_MCU_;
     int ethercatmcPTPallGood_;
     int ethercatmcRBV_TSE_; /* motor position (RBV in motorRecord) MCU time
