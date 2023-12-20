@@ -932,7 +932,7 @@ class AxisMr:
         )
         return valueVALok
 
-    def setSoftLimitsOff(self, tc_no, direction=-1):
+    def setSoftLimitsOff(self, tc_no, direction=-1, disableDHLM=True, disableDLLM=True):
         actDHLM = float(self.axisCom.get(".DHLM", use_monitor=False))
         actDLLM = float(self.axisCom.get(".DLLM", use_monitor=False))
 
@@ -941,11 +941,15 @@ class AxisMr:
         )
         # switch off the controller soft limits
         if direction == 0:
-            self.axisCom.put("-CfgDLLM-En", 0, wait=True)
-            self.axisCom.put("-CfgDHLM-En", 0, wait=True)
+            if disableDLLM:
+                self.axisCom.put("-CfgDLLM-En", 0, wait=True)
+            if disableDHLM:
+                self.axisCom.put("-CfgDHLM-En", 0, wait=True)
         else:
-            self.axisCom.put("-CfgDHLM-En", 0, wait=True)
-            self.axisCom.put("-CfgDLLM-En", 0, wait=True)
+            if disableDHLM:
+                self.axisCom.put("-CfgDHLM-En", 0, wait=True)
+            if disableDLLM:
+                self.axisCom.put("-CfgDLLM-En", 0, wait=True)
 
         maxTime = 10  # seconds maximum to let read only parameters ripple through
         maxDelta = 0.05  # 5 % error tolerance margin
