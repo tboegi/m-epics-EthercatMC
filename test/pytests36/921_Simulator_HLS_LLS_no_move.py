@@ -35,14 +35,13 @@ class Test(unittest.TestCase):
         tc_no = tc_no_base + 1
         self.axisCom.putDbgStrToLOG("Start " + str(int(tc_no)), wait=True)
         self.axisMr.powerOnHomeAxis(tc_no)
-        self.axisMr.setSoftLimitsOn(tc_no, initAbsMinMax=True)
         self.axisCom.putDbgStrToLOG("Passed " + str(tc_no), wait=True)
 
     # low limit switch
     def test_TC_92102(self):
         tc_no = tc_no_base + 2
         self.axisCom.putDbgStrToLOG("Start " + str(int(tc_no)), wait=True)
-        self.axisMr.setSoftLimitsOff(tc_no)
+        self.axisMr.setSoftLimitsOff(tc_no, disableDHLM=False)
         self.axisMr.moveWait(tc_no, self.old_LLM)
         self.axisCom.put(".JOGR", 1)
         wait_for_done = 60
@@ -55,21 +54,6 @@ class Test(unittest.TestCase):
             self.axisCom.putDbgStrToLOG("Failed " + str(tc_no), wait=True)
         assert passed
 
-    #    def test_TC_92104(self):
-    #        tc_no = tc_no_base + 4
-    #        moveIntoLimitSwitch(self, tc_no, movingMethod="MoveVel")
-    #
-    #    # low limit switch via moveVel and "infinite" Soft limit
-    #    def test_TC_92105(self):
-    #        tc_no = tc_no_base + 5
-    #        moveIntoLimitSwitch(
-    #            self,
-    #            tc_no,
-    #            movingMethod="MoveVel",
-    #            doDisableSoftLimit=False,
-    #            setInfiniteSoftLimit=True,
-    #        )
-    #
     def teardown_class(self):
         tc_no = int(filnam) * 10000 + 9999
         print(
