@@ -12,37 +12,9 @@ filnam = os.path.basename(__file__)[0:3]
 tc_no_base = int(os.path.basename(__file__)[0:3]) * 10
 ###
 
-direction = 1
-
 
 def lineno():
     return inspect.currentframe().f_back.f_lineno
-
-
-def moveIntoLimitSwitch(
-    self,
-    tc_no,
-    movingMethod="",
-    paramWhileMove=False,
-    doDisableSoftLimit=True,
-    setInfiniteSoftLimit=False,
-):
-    msta = int(self.axisCom.get(".MSTA"))
-    if msta & self.axisMr.MSTA_BIT_HOMED:
-        self.axisCom.putDbgStrToLOG("Start " + str(int(tc_no)), wait=True)
-        passed = self.axisMr.moveIntoLS(
-            tc_no=tc_no,
-            direction=direction,
-            movingMethod=movingMethod,
-            paramWhileMove=paramWhileMove,
-            doDisableSoftLimit=doDisableSoftLimit,
-            setInfiniteSoftLimit=setInfiniteSoftLimit,
-        )
-        if passed:
-            self.axisCom.putDbgStrToLOG("Passed " + str(tc_no), wait=True)
-        else:
-            self.axisCom.putDbgStrToLOG("Failed " + str(tc_no), wait=True)
-        assert passed
 
 
 class Test(unittest.TestCase):
@@ -53,6 +25,8 @@ class Test(unittest.TestCase):
 
     axisCom = AxisCom(url_string, log_debug=False)
     axisMr = AxisMr(axisCom)
+    old_HLM = axisCom.get(".HLM")
+    old_LLM = axisCom.get(".LLM")
 
     print(f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S} {filnam}")
 
@@ -64,37 +38,44 @@ class Test(unittest.TestCase):
         self.axisMr.setSoftLimitsOn(tc_no, initAbsMinMax=True)
         self.axisCom.putDbgStrToLOG("Passed " + str(tc_no), wait=True)
 
-    # high limit switch
+    # low limit switch
     def test_TC_92102(self):
         tc_no = tc_no_base + 2
-        moveIntoLimitSwitch(self, tc_no, movingMethod="JOG")
+        self.axisCom.putDbgStrToLOG("Start " + str(int(tc_no)), wait=True)
+        self.axisMr.setSoftLimitsOff(tc_no)
+        self.axisMr.moveWait(tc_no, self.old_LLM)
+        self.axisCom.put(".JOGR", 1)
+        wait_for_done = 60
+        self.axisMr.waitForStartAndDone(tc_no, wait_for_done)
+        lls = self.axisCom.get(".LLS", use_monitor=False)
+        passed = lls
+        if passed:
+            self.axisCom.putDbgStrToLOG("Passed " + str(tc_no), wait=True)
+        else:
+            self.axisCom.putDbgStrToLOG("Failed " + str(tc_no), wait=True)
+        assert passed
 
-    # high limit switch, disabling softlimts after the JOG
-    # had been started. This is not supported by our MCU SW
-    # def test_TC_92103(self):
-    #    tc_no = tc_no_base + 3
-    #    moveIntoLimitSwitch(self, tc_no, movingMethod="JOG", paramWhileMove=True)
-
-    # high limit switch via moveVel
-    # had been started
-    def test_TC_92104(self):
-        tc_no = tc_no_base + 4
-        moveIntoLimitSwitch(self, tc_no, movingMethod="MoveVel")
-
-    # low limit switch via moveVel and "infinite" Soft limit
-    def test_TC_92105(self):
-        tc_no = tc_no_base + 5
-        moveIntoLimitSwitch(
-            self,
-            tc_no,
-            movingMethod="MoveVel",
-            doDisableSoftLimit=False,
-            setInfiniteSoftLimit=True,
-        )
-
+    #    def test_TC_92104(self):
+    #        tc_no = tc_no_base + 4
+    #        moveIntoLimitSwitch(self, tc_no, movingMethod="MoveVel")
+    #
+    #    # low limit switch via moveVel and "infinite" Soft limit
+    #    def test_TC_92105(self):
+    #        tc_no = tc_no_base + 5
+    #        moveIntoLimitSwitch(
+    #            self,
+    #            tc_no,
+    #            movingMethod="MoveVel",
+    #            doDisableSoftLimit=False,
+    #            setInfiniteSoftLimit=True,
+    #        )
+    #
     def teardown_class(self):
         tc_no = int(filnam) * 10000 + 9999
         print(
             f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S} {filnam}:{lineno()} {tc_no} teardown_class"
+        )
+        self.axisMr.setSoftLimitsOn(
+            tc_no, low_limit=self.old_LLM, high_limit=self.old_HLM
         )
         self.axisCom.close()
