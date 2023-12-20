@@ -886,7 +886,7 @@ class AxisMr:
         self, tc_no, expFileName, motorStartPos, EndPos1, EndPos2
     ):
         debug_text = f"{tc_no}#{lineno()} Start={motorStartPos} EndPos1={EndPos1} EndPos2={EndPos2}"
-        accl = self.axisCom.get(".ACCL")
+        accs = self.axisCom.get(".ACCS")
         velo = self.axisCom.get(".VELO")
 
         self.axisCom.putDbgStrToLOG(debug_text, wait=True)
@@ -896,11 +896,11 @@ class AxisMr:
         # We should move away from the LS and back onto it
         line1 = (
             "move absolute position=%g max_velocity=%g acceleration=%g motorPosNow=%g\n"
-            % (EndPos2, velo, accl, motorStartPos)
+            % (EndPos2, velo, accs, motorStartPos)
         )
         line2 = (
             "move absolute position=%g max_velocity=%g acceleration=%g motorPosNow=%g\n"
-            % (motorStartPos, velo, accl, EndPos2)
+            % (motorStartPos, velo, accs, EndPos2)
         )
         expFile.write(f"{line1}{line2}")
         # expFile.write(f"{line1}")

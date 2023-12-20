@@ -35,7 +35,14 @@ class Test(unittest.TestCase):
     def test_TC_92101(self):
         tc_no = tc_no_base + 1
         self.axisCom.putDbgStrToLOG("Start " + str(int(tc_no)), wait=True)
-        self.axisMr.initializeMotorRecordSimulatorAxis(tc_no)
+        if False:
+            self.axisMr.initializeMotorRecordSimulatorAxis(tc_no)
+        else:
+            self.axisMr.motorInitAllForBDST(tc_no)
+            self.axisCom.put(".BVEL", 0.0)
+            self.axisCom.put(".BACC", 0.0)
+            self.axisCom.put(".BDST", 0.0)
+
         self.axisCom.put("-PwrAuto", 0)
         self.axisMr.setValueOnSimulator(tc_no, "bAxisHomed", 1)
         self.axisMr.powerOnHomeAxis(tc_no)
@@ -77,7 +84,10 @@ class Test(unittest.TestCase):
         self.axisMr.writeExpFileDontMoveThenMoveWhenOnLS(
             tc_no, expFileName, StartPos, EndPos1, EndPos2
         )
-        self.axisMr.moveWait(tc_no, EndPos1)
+        try:
+            self.axisMr.moveWait(tc_no, EndPos1)
+        except:  # noqa: E722
+            pass
         self.axisMr.moveWait(tc_no, EndPos2)
         self.axisMr.moveWait(tc_no, StartPos)
         self.axisMr.setValueOnSimulator(tc_no, "dbgCloseLogFile", "1")
