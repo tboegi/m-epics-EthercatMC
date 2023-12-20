@@ -882,10 +882,36 @@ class AxisMr:
         expFile.write("EOF\n")
         expFile.close()
 
-    def cmpUnlinkExpectedActualFile(self, tc_no, expFileName, actFileName):
+    def writeExpFileDontMoveThenMoveWhenOnLS(
+        self, tc_no, expFileName, motorStartPos, EndPos1, EndPos2
+    ):
+        debug_text = f"{tc_no}#{lineno()} Start={motorStartPos} EndPos1={EndPos1} EndPos2={EndPos2}"
+        accl = self.axisCom.get(".ACCL")
+        velo = self.axisCom.get(".VELO")
+
+        self.axisCom.putDbgStrToLOG(debug_text, wait=True)
+        # Create a "expected" file
+        expFile = open(expFileName, "w")
+
+        # We should move away from the LS and back onto it
+        line1 = (
+            "move absolute position=%g max_velocity=%g acceleration=%g motorPosNow=%g\n"
+            % (EndPos2, velo, accl, motorStartPos)
+        )
+        line2 = (
+            "move absolute position=%g max_velocity=%g acceleration=%g motorPosNow=%g\n"
+            % (motorStartPos, velo, accl, EndPos2)
+        )
+        expFile.write(f"{line1}{line2}")
+        # expFile.write(f"{line1}")
+        expFile.write("EOF\n")
+        expFile.close()
+
+    def cmpUnlinkExpectedActualFile(
+        self, tc_no, expFileName, actFileName, wait_for_found=5
+    ):
         # compare actual and expFile
         sameContent = False
-        wait_for_found = 5
         while wait_for_found > 0:
             try:
                 file = open(expFileName)

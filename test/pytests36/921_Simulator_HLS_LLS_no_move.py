@@ -31,10 +31,11 @@ class Test(unittest.TestCase):
 
     print(f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S} {filnam}")
 
-    # Make sure that motor is homed
+    # Make sure that motor is initialized
     def test_TC_92101(self):
         tc_no = tc_no_base + 1
         self.axisCom.putDbgStrToLOG("Start " + str(int(tc_no)), wait=True)
+        self.axisMr.initializeMotorRecordSimulatorAxis(tc_no)
         self.axisCom.put("-PwrAuto", 0)
         self.axisMr.setValueOnSimulator(tc_no, "bAxisHomed", 1)
         self.axisMr.powerOnHomeAxis(tc_no)
@@ -42,7 +43,7 @@ class Test(unittest.TestCase):
         # self.axisMr.setValueOnSimulator(tc_no, "fLowHardLimitPos", self.old_LLM)
         self.axisCom.putDbgStrToLOG("Passed " + str(tc_no), wait=True)
 
-    # low limit switch
+    # activate low limit switch
     def test_TC_92102(self):
         tc_no = tc_no_base + 2
         self.axisCom.putDbgStrToLOG("Start " + str(int(tc_no)), wait=True)
@@ -52,11 +53,38 @@ class Test(unittest.TestCase):
         self.axisCom.put(".JOGR", 1)
         wait_for_done = 60
         self.axisMr.waitForStartAndDone(tc_no, wait_for_done)
-        rbv = self.axisCom.get(".RBV", use_monitor=False)
-        self.axisMr.setSoftLimitsOn(tc_no, low_limit=rbv, high_limit=self.old_DHLM)
-        self.axisMr.setSoftLimitsOff(tc_no, disableDLLM=False)
         lls = self.axisCom.get(".LLS", use_monitor=False)
         passed = lls
+        if passed:
+            self.axisCom.putDbgStrToLOG("Passed " + str(tc_no), wait=True)
+        else:
+            self.axisCom.putDbgStrToLOG("Failed " + str(tc_no), wait=True)
+        assert passed
+
+    # Try to move below limit switch
+    def test_TC_92104(self):
+        tc_no = tc_no_base + 2
+        self.axisCom.putDbgStrToLOG("Start " + str(int(tc_no)), wait=True)
+        mot = self.axisCom.getMotorPvName()
+        fileName = "/tmp/" + mot.replace(":", "-") + "-" + str(tc_no)
+        expFileName = fileName + ".exp"
+        actFileName = fileName + ".act"
+        StartPos = float(self.axisCom.get(".RBV"))
+        EndPos1 = StartPos - 2.0
+        EndPos2 = StartPos + 2.0
+
+        self.axisMr.setValueOnSimulator(tc_no, "log", actFileName)
+        self.axisMr.writeExpFileDontMoveThenMoveWhenOnLS(
+            tc_no, expFileName, StartPos, EndPos1, EndPos2
+        )
+        self.axisMr.moveWait(tc_no, EndPos1)
+        self.axisMr.moveWait(tc_no, EndPos2)
+        self.axisMr.moveWait(tc_no, StartPos)
+        self.axisMr.setValueOnSimulator(tc_no, "dbgCloseLogFile", "1")
+        wait_for_found = 0.2
+        passed = self.axisMr.cmpUnlinkExpectedActualFile(
+            tc_no, expFileName, actFileName, wait_for_found=wait_for_found
+        )
         if passed:
             self.axisCom.putDbgStrToLOG("Passed " + str(tc_no), wait=True)
         else:
