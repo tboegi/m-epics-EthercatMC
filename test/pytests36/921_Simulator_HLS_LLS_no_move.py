@@ -17,6 +17,33 @@ def lineno():
     return inspect.currentframe().f_back.f_lineno
 
 
+def tryToMoveWhenLSisActive(self, tc_no):
+    mot = self.axisCom.getMotorPvName()
+    fileName = "/tmp/" + mot.replace(":", "-") + "-" + str(tc_no)
+    expFileName = fileName + ".exp"
+    actFileName = fileName + ".act"
+    StartPos = float(self.axisCom.get(".RBV"))
+    EndPos1 = StartPos - 2.0
+    EndPos2 = StartPos + 2.0
+
+    self.axisMr.setValueOnSimulator(tc_no, "log", actFileName)
+    self.axisMr.writeExpFileDontMoveThenMoveWhenOnLS(
+        tc_no, expFileName, StartPos, EndPos1, EndPos2
+    )
+    try:
+        self.axisMr.moveWait(tc_no, EndPos1)
+    except:  # noqa: E722
+        pass
+    self.axisMr.moveWait(tc_no, EndPos2)
+    self.axisMr.moveWait(tc_no, StartPos)
+    self.axisMr.setValueOnSimulator(tc_no, "dbgCloseLogFile", "1")
+    wait_for_found = 0.2
+    passed = self.axisMr.cmpUnlinkExpectedActualFile(
+        tc_no, expFileName, actFileName, wait_for_found=wait_for_found
+    )
+    return passed
+
+
 class Test(unittest.TestCase):
     url_string = os.getenv("TESTEDMOTORAXIS")
     print(
@@ -75,29 +102,7 @@ class Test(unittest.TestCase):
     def test_TC_92104(self):
         tc_no = tc_no_base + 2
         self.axisCom.putDbgStrToLOG("Start " + str(int(tc_no)), wait=True)
-        mot = self.axisCom.getMotorPvName()
-        fileName = "/tmp/" + mot.replace(":", "-") + "-" + str(tc_no)
-        expFileName = fileName + ".exp"
-        actFileName = fileName + ".act"
-        StartPos = float(self.axisCom.get(".RBV"))
-        EndPos1 = StartPos - 2.0
-        EndPos2 = StartPos + 2.0
-
-        self.axisMr.setValueOnSimulator(tc_no, "log", actFileName)
-        self.axisMr.writeExpFileDontMoveThenMoveWhenOnLS(
-            tc_no, expFileName, StartPos, EndPos1, EndPos2
-        )
-        try:
-            self.axisMr.moveWait(tc_no, EndPos1)
-        except:  # noqa: E722
-            pass
-        self.axisMr.moveWait(tc_no, EndPos2)
-        self.axisMr.moveWait(tc_no, StartPos)
-        self.axisMr.setValueOnSimulator(tc_no, "dbgCloseLogFile", "1")
-        wait_for_found = 0.2
-        passed = self.axisMr.cmpUnlinkExpectedActualFile(
-            tc_no, expFileName, actFileName, wait_for_found=wait_for_found
-        )
+        passed = tryToMoveWhenLSisActive(self, tc_no)
         if passed:
             self.axisCom.putDbgStrToLOG("Passed " + str(tc_no), wait=True)
         else:
