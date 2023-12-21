@@ -25,11 +25,14 @@ class Test(unittest.TestCase):
 
     axisCom = AxisCom(url_string, log_debug=False)
     axisMr = AxisMr(axisCom)
+    isMotorMaster = axisMr.getIsMotorMaster(int(filnam))
     old_PwrAuto = axisCom.get("-PwrAuto")
     old_DHLM = axisCom.get("-CfgDHLM")
     old_DLLM = axisCom.get("-CfgDLLM")
 
-    print(f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S} {filnam}")
+    print(
+        f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S} {filnam} isMotorMaster={isMotorMaster}"
+    )
 
     # Make sure that motor is initialized
     def test_TC_92101(self):
