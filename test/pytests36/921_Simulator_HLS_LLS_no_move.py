@@ -17,7 +17,7 @@ def lineno():
     return inspect.currentframe().f_back.f_lineno
 
 
-def tryToMoveWhenLSisActive(self, tc_no):
+def tryToMoveWhenLSisActive(self, tc_no, field):
     mot = self.axisCom.getMotorPvName()
     fileName = "/tmp/" + mot.replace(":", "-") + "-" + str(tc_no)
     expFileName = fileName + ".exp"
@@ -30,17 +30,29 @@ def tryToMoveWhenLSisActive(self, tc_no):
     self.axisMr.writeExpFileDontMoveThenMoveWhenOnLS(
         tc_no, expFileName, StartPos, EndPos1, EndPos2
     )
-    try:
-        self.axisMr.moveWait(tc_no, EndPos1)
-    except:  # noqa: E722
-        pass
+    if field == ".VAL":
+        try:
+            self.axisMr.moveWait(tc_no, EndPos1)
+        except:  # noqa: E722
+            pass
+    elif field == ".JOGR":
+        self.axisCom.put(".JOGR", 1)
+
     self.axisMr.moveWait(tc_no, EndPos2)
     self.axisMr.moveWait(tc_no, StartPos)
     self.axisMr.setValueOnSimulator(tc_no, "dbgCloseLogFile", "1")
     wait_for_found = 0.2
-    passed = self.axisMr.cmpUnlinkExpectedActualFile(
+    fileCmpOk = self.axisMr.cmpUnlinkExpectedActualFile(
         tc_no, expFileName, actFileName, wait_for_found=wait_for_found
     )
+    if field == ".JOGR":
+        active = self.axisCom.get(field)
+    else:
+        active = False
+    print(
+        f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S} {filnam}:{lineno()} {tc_no} fileCmpOk={fileCmpOk} active={active}"
+    )
+    passed = not active and fileCmpOk
     return passed
 
 
@@ -104,9 +116,20 @@ class Test(unittest.TestCase):
 
     # Try to move below limit switch
     def test_TC_92104(self):
-        tc_no = tc_no_base + 2
+        tc_no = tc_no_base + 4
         self.axisCom.putDbgStrToLOG("Start " + str(int(tc_no)), wait=True)
-        passed = tryToMoveWhenLSisActive(self, tc_no)
+        passed = tryToMoveWhenLSisActive(self, tc_no, ".VAL")
+        if passed:
+            self.axisCom.putDbgStrToLOG("Passed " + str(tc_no), wait=True)
+        else:
+            self.axisCom.putDbgStrToLOG("Failed " + str(tc_no), wait=True)
+        assert passed
+
+    # Try to jog below limit switch
+    def test_TC_92106(self):
+        tc_no = tc_no_base + 6
+        self.axisCom.putDbgStrToLOG("Start " + str(int(tc_no)), wait=True)
+        passed = tryToMoveWhenLSisActive(self, tc_no, ".JOGR")
         if passed:
             self.axisCom.putDbgStrToLOG("Passed " + str(tc_no), wait=True)
         else:
