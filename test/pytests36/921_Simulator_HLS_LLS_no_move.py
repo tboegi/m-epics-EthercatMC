@@ -17,7 +17,21 @@ def lineno():
     return inspect.currentframe().f_back.f_lineno
 
 
+def tryToMoveWhenLSisActiveWrapper(self, tc_no, field):
+    self.axisCom.put(".BDST", 0)
+    passed1 = True
+    # passed1 = tryToMoveWhenLSisActive(self, tc_no, field)
+    tc_no = tc_no + 1
+    self.axisCom.put(".BDST", 2)
+    passed2 = tryToMoveWhenLSisActive(self, tc_no, field)
+    print(
+        f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S} {filnam}:{lineno()} {tc_no} passed1={passed1} passed2={passed2}"
+    )
+    return passed1 and passed2
+
+
 def tryToMoveWhenLSisActive(self, tc_no, field):
+    self.axisCom.putDbgStrToLOG("Start " + str(int(tc_no)), wait=True)
     mot = self.axisCom.getMotorPvName()
     fileName = "/tmp/" + mot.replace(":", "-") + "-" + str(tc_no)
     expFileName = fileName + ".exp"
@@ -53,6 +67,10 @@ def tryToMoveWhenLSisActive(self, tc_no, field):
         f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S} {filnam}:{lineno()} {tc_no} fileCmpOk={fileCmpOk} active={active}"
     )
     passed = not active and fileCmpOk
+    if passed:
+        self.axisCom.putDbgStrToLOG("Passed " + str(tc_no), wait=True)
+    else:
+        self.axisCom.putDbgStrToLOG("Failed " + str(tc_no), wait=True)
     return passed
 
 
@@ -117,23 +135,13 @@ class Test(unittest.TestCase):
     # Try to move below limit switch
     def test_TC_92104(self):
         tc_no = tc_no_base + 4
-        self.axisCom.putDbgStrToLOG("Start " + str(int(tc_no)), wait=True)
-        passed = tryToMoveWhenLSisActive(self, tc_no, ".VAL")
-        if passed:
-            self.axisCom.putDbgStrToLOG("Passed " + str(tc_no), wait=True)
-        else:
-            self.axisCom.putDbgStrToLOG("Failed " + str(tc_no), wait=True)
+        passed = tryToMoveWhenLSisActiveWrapper(self, tc_no, ".VAL")
         assert passed
 
     # Try to jog below limit switch
     def test_TC_92106(self):
         tc_no = tc_no_base + 6
-        self.axisCom.putDbgStrToLOG("Start " + str(int(tc_no)), wait=True)
-        passed = tryToMoveWhenLSisActive(self, tc_no, ".JOGR")
-        if passed:
-            self.axisCom.putDbgStrToLOG("Passed " + str(tc_no), wait=True)
-        else:
-            self.axisCom.putDbgStrToLOG("Failed " + str(tc_no), wait=True)
+        passed = tryToMoveWhenLSisActiveWrapper(self, tc_no, ".JOGR")
         assert passed
 
     def teardown_class(self):
