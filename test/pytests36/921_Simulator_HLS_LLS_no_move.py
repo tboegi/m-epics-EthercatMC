@@ -50,7 +50,7 @@ class Test(unittest.TestCase):
         f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S} {filnam} url_string={url_string}"
     )
 
-    axisCom = AxisCom(url_string, log_debug=False)
+    axisCom = AxisCom(url_string, log_debug=True)
     axisMr = AxisMr(axisCom)
     isMotorMaster = axisMr.getIsMotorMaster(int(filnam))
     old_PwrAuto = axisCom.get("-PwrAuto")
@@ -68,7 +68,7 @@ class Test(unittest.TestCase):
         if False:
             self.axisMr.initializeMotorRecordSimulatorAxis(tc_no)
         else:
-            self.axisMr.motorInitAllForBDST(tc_no)
+            self.axisMr.motorInitAllForBDSTIfNeeded(tc_no)
             self.axisCom.put(".BVEL", 0.0)
             self.axisCom.put(".BACC", 0.0)
             self.axisCom.put(".BDST", 0.0)
@@ -85,6 +85,10 @@ class Test(unittest.TestCase):
         tc_no = tc_no_base + 2
         self.axisCom.putDbgStrToLOG("Start " + str(int(tc_no)), wait=True)
         # self.axisMr.setSoftLimitsOff(tc_no, disableDHLM=False)
+        lls = self.axisCom.get(".LLS", use_monitor=False)
+        if lls:
+            self.axisCom.putDbgStrToLOG("OK     " + str(tc_no), wait=True)
+            return
         self.axisMr.setSoftLimitsOff(tc_no)
         self.axisMr.moveWait(tc_no, self.old_DLLM)
         self.axisCom.put(".JOGR", 1)
