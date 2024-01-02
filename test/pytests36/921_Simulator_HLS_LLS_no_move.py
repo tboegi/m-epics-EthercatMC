@@ -17,6 +17,15 @@ def lineno():
     return inspect.currentframe().f_back.f_lineno
 
 
+def moveIntoLS(self, tc_no):
+    lls = self.axisCom.get(".LLS", use_monitor=False)
+    if lls:
+        return
+    self.axisCom.put(".JOGR", 1)
+    wait_for_done = 20
+    self.axisMr.waitForValueChanged(self, tc_no, ".LLS", 0, 0, 60, debugPrint=True)
+
+
 def tryToMoveWhenLSisActiveWrapper(self, tc_no, field):
     self.axisCom.put(".BDST", 0)
     passed1 = True
@@ -32,6 +41,7 @@ def tryToMoveWhenLSisActiveWrapper(self, tc_no, field):
 
 def tryToMoveWhenLSisActive(self, tc_no, field):
     self.axisCom.putDbgStrToLOG("Start " + str(int(tc_no)), wait=True)
+    moveIntoLS(self, tc_no)
     mot = self.axisCom.getMotorPvName()
     fileName = "/tmp/" + mot.replace(":", "-") + "-" + str(tc_no)
     expFileName = fileName + ".exp"
@@ -45,12 +55,18 @@ def tryToMoveWhenLSisActive(self, tc_no, field):
         tc_no, expFileName, StartPos, EndPos1, EndPos2
     )
     if field == ".VAL":
-        try:
-            self.axisMr.moveWait(tc_no, EndPos1)
-        except:  # noqa: E722
-            pass
+        self.axisCom.put(".VAL", EndPos1)
+        # try:
+        #    self.axisMr.moveWait(tc_no, EndPos1)
+        # except:  # noqa: E722
+        #    pass
     elif field == ".JOGR":
         self.axisCom.put(".JOGR", 1)
+    else:
+        print(
+            f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S} {filnam}:{lineno()} {tc_no} invalid field={field}"
+        )
+        assert False
 
     self.axisMr.moveWait(tc_no, EndPos2)
     self.axisMr.moveWait(tc_no, StartPos)
@@ -80,7 +96,7 @@ class Test(unittest.TestCase):
         f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S} {filnam} url_string={url_string}"
     )
 
-    axisCom = AxisCom(url_string, log_debug=True)
+    axisCom = AxisCom(url_string, log_debug=False)
     axisMr = AxisMr(axisCom)
     isMotorMaster = axisMr.getIsMotorMaster(int(filnam))
     old_PwrAuto = axisCom.get("-PwrAuto")
