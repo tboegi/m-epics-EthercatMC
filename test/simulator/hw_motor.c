@@ -892,13 +892,13 @@ int movePosition(int axis_no, double position, int relative,
               "move relative delta=%g max_velocity=%g acceleration=%g "
               "motorPosNow=%g\n",
               position, max_velocity, acceleration,
-              motor_axis[axis_no].MotorPosNow);
+              motor_axis[axis_no].MotorPosReported);
     } else {
       fprintf(motor_axis[axis_no].logFile,
               "move absolute position=%g max_velocity=%g acceleration=%g "
               "motorPosNow=%g\n",
               position, max_velocity, acceleration,
-              motor_axis[axis_no].MotorPosNow);
+              motor_axis[axis_no].MotorPosReported);
     }
     fflush(motor_axis[axis_no].logFile);
   }
