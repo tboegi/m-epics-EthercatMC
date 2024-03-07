@@ -132,6 +132,7 @@ require essioc
 require calc
 require ethercatmc
 EOF
+# shellcheck disable=SC2016
   sed <../../test/startup/st.${MOTORCFG}.iocsh \
     -e "s/^cd /#cd /" -e 's/^ *< *\([^ ]*\)/iocshLoad("$(ethercatmc_DIR)\1")/g' |
     grep -v '^  *#' >>$stcmddst || {
