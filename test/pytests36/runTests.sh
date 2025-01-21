@@ -17,7 +17,7 @@
 #
 # run specif test on a motor PV a couple of times
 # ./runTests.sh IOC:m1 100_Record-HOMF.py 4
-
+set -e
 # First of all, check for whitespace damage (TAB, trailing WS
 ../checkws.sh || {
   echo >&2 ../checkws.sh failed
@@ -112,6 +112,13 @@ export MYVIRTUALENV
 # There must be a better way to do this
 # shellcheck disable=SC2154
 if test "$ImageOS" = ubuntu20; then
+  ./doRunTests.sh "$@"
+  exit
+fi
+
+# There must be a better way to do this
+# shellcheck disable=SC2154
+if test "$ImageOS" = ubuntu22; then
   ./doRunTests.sh "$@"
   exit
 fi
