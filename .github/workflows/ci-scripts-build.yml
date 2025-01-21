@@ -57,7 +57,7 @@ jobs:
             cmp: gcc
             configuration: static
             base: "3.15"
-            set: oldestset
+            set: latestset
             checkws: true
             name: "3.15 u2404 static"
 
@@ -68,7 +68,7 @@ jobs:
       run: |
         echo "::set-output name=week::$(/bin/date -u "+%U")"
       shell: bash
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         submodules: true
     - name: Cache Dependencies
