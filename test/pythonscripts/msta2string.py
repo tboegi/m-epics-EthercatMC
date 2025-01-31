@@ -83,14 +83,20 @@ def get_msta_text_delta(old_msta, new_msta):
         else:
             ret = ret + "-Hmd"
     if (old_msta ^ new_msta) & MSTA_BIT_MINUS_LS:
-        ret = ret + "xLls"
+        if new_msta & MSTA_BIT_MINUS_LS:
+            ret = ret + "+LLS"
+        else:
+            ret = ret + "-LLS"
     if (old_msta ^ new_msta) & MSTA_BIT_GAIN_SUPPORT:
         if new_msta & MSTA_BIT_GAIN_SUPPORT:
             ret = ret + "+GainSupport"
         else:
             ret = ret + "-GainSupport"
     if (old_msta ^ new_msta) & MSTA_BIT_MOVING:
-        ret = ret + "xMoving"
+        if new_msta & MSTA_BIT_MOVING:
+            ret = ret + "+Moving"
+        else:
+            ret = ret + "-Moving"
     if (old_msta ^ new_msta) & MSTA_BIT_PROBLEM:
         if new_msta & MSTA_BIT_PROBLEM:
             ret = ret + "+Problem"
@@ -102,7 +108,10 @@ def get_msta_text_delta(old_msta, new_msta):
         else:
             ret = ret + "-Encoder"
     if (old_msta ^ new_msta) & MSTA_BIT_HOME:
-        ret = ret + "xHome"
+        if new_msta & MSTA_BIT_HOME:
+            ret = ret + "+Homed"
+        else:
+            ret = ret + "-Homed"
     if (old_msta ^ new_msta) & MSTA_BIT_SLIP_STALL:
         ret = ret + "xSlip"
     if (old_msta ^ new_msta) & MSTA_BIT_AMPON:
@@ -111,9 +120,15 @@ def get_msta_text_delta(old_msta, new_msta):
         else:
             ret = ret + "-Poweron"
     if (old_msta ^ new_msta) & MSTA_BIT_HOMELS:
-        ret = ret + "xHomeSwitch"
+        if new_msta & MSTA_BIT_HOMELS:
+            ret = ret + "+HomeSwitch"
+        else:
+            ret = ret + "-HomeSwitch"
     if (old_msta ^ new_msta) & MSTA_BIT_PLUS_LS:
-        ret = ret + "xHls"
+        if new_msta & MSTA_BIT_PLUS_LS:
+            ret = ret + "+HLS"
+        else:
+            ret = ret + "-HLS"
     if (old_msta ^ new_msta) & MSTA_BIT_DONE:
         if new_msta & MSTA_BIT_DONE:
             ret = ret + "+Done"
