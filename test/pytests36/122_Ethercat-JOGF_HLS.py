@@ -23,7 +23,6 @@ def moveIntoLimitSwitch(
     self,
     tc_no,
     movingMethod="",
-    paramWhileMove=False,
     doDisableSoftLimit=True,
     setInfiniteSoftLimit=False,
 ):
@@ -34,7 +33,6 @@ def moveIntoLimitSwitch(
             tc_no=tc_no,
             direction=direction,
             movingMethod=movingMethod,
-            paramWhileMove=paramWhileMove,
             doDisableSoftLimit=doDisableSoftLimit,
             setInfiniteSoftLimit=setInfiniteSoftLimit,
         )

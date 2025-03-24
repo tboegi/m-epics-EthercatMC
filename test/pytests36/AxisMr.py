@@ -581,7 +581,6 @@ class AxisMr:
         doDisableSoftLimit=True,
         setInfiniteSoftLimit=False,
         movingMethod="JOG",
-        paramWhileMove=False,
     ):
         assert tc_no != 0
         assert direction >= 0
@@ -599,8 +598,6 @@ class AxisMr:
         old_DHLM = self.axisCom.get("-CfgDHLM")
         old_DLLM = self.axisCom.get("-CfgDLLM")
         margin = 1.1
-        if paramWhileMove:
-            margin = margin + 2
         if movingMethod == "MoveVel":
             movingFieldName = "-MoveVel"
         if direction > 0:
@@ -631,7 +628,7 @@ class AxisMr:
                 movingFieldValue = 0 - jvel
 
         print(
-            f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S} {filnam} {tc_no} paramWhileMove={paramWhileMove} margin={margin}"
+            f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S} {filnam} {tc_no} margin={margin}"
         )
         print(
             f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S} {filnam} {tc_no} direction={direction } jog_start_pos={jog_start_pos:f}"
@@ -647,33 +644,10 @@ class AxisMr:
             movingFieldValue = nearly_infinite
 
         if doDisableSoftLimit:
-            if paramWhileMove:
-                # Start jogging, switch soft limit off while jogging
-                #
-                wait_for_stop = self.jogCalcTimeout(tc_no, direction)
-                self.axisCom.put(movingFieldName, movingFieldValue)
-                wait_for_start = 2
-                self.waitForStart(tc_no, wait_for_start)
-                self.setSoftLimitsOff(tc_no, direction=direction)
-                try:
-                    self.waitForStop(tc_no, wait_for_stop)
-                except Exception:
-                    self.axisCom.put(".STOP", 1)
-                    try:
-                        self.waitForStop(tc_no, 2.0)
-                    except Exception as ex:
-                        print(
-                            f"{datetime.datetime.now():%Y-%m-%d %H:%M:%S} {filnam} {tc_no} ex={ex}"
-                        )
-                if direction > 0:
-                    self.axisCom.put(".JOGF", 0)
-                else:
-                    self.axisCom.put(".JOGR", 0)
-            else:
-                self.setSoftLimitsOff(tc_no, direction=direction)
-                time_to_wait = self.jogCalcTimeout(tc_no, direction)
-                self.axisCom.put(movingFieldName, movingFieldValue)
-                self.waitForStartAndDone(str(tc_no), 30 + time_to_wait + 3.0)
+            self.setSoftLimitsOff(tc_no, direction=direction)
+            time_to_wait = self.jogCalcTimeout(tc_no, direction)
+            self.axisCom.put(movingFieldName, movingFieldValue)
+            self.waitForStartAndDone(str(tc_no), 30 + time_to_wait + 3.0)
         else:
             if setInfiniteSoftLimit:
                 oldSoftLimitValue = self.axisCom.get(softlimitFieldName)
